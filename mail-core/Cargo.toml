@@ -1,0 +1,21 @@
+[package]
+name = "mail-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "Core types and traits for mail-rs email library"
+
+[dependencies]
+thiserror.workspace = true
+chrono.workspace = true
+mime.workspace = true
+quoted_printable.workspace = true
+base64.workspace = true
+bytes.workspace = true
+
+[dev-dependencies]

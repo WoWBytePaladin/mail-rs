@@ -1,0 +1,53 @@
+[workspace]
+resolver = "3"
+members = [
+    "mail-core",
+    "mail-smtp",
+    "mail-builder",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.90.0"
+authors = ["Mail-RS Contributors"]
+license = "MIT"
+repository = "https://github.com/WoWBytePaladin/mail-rs.git"
+keywords = ["email", "mail", "smtp", "mime"]
+categories = ["email", "network-programming"]
+
+[workspace.dependencies]
+# Async runtime
+tokio = { version = "1.42", features = ["full"] }
+async-trait = "0.1.83"
+
+# Email parsing and encoding
+mail-parser = "0.9.5"
+quoted_printable = "0.5.1"
+base64 = "0.22.1"
+
+# MIME handling
+mime = "0.3.17"
+mime_guess = "2.0.5"
+
+# Networking and TLS
+lettre = "0.11.11"
+
+# Date and time
+chrono = "0.4.39"
+
+# Error handling
+thiserror = "2.0.9"
+anyhow = "1.0.95"
+
+# Utilities
+bytes = "1.9.0"
+uuid = { version = "1.11.0", features = ["v4"] }
+
+# Testing
+mockito = "1.6.1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
