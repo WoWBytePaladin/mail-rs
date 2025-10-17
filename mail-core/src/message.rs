@@ -171,7 +171,13 @@ impl Message {
         self
     }
 
-    /// Set the Subject header
+    /// Set the Reply-To header
+    pub fn reply_to(mut self, address: Address) -> Self {
+        self.header.set_address("Reply-To", address);
+        self
+    }
+
+    /// Set the subject
     pub fn subject(mut self, subject: impl Into<String>) -> Self {
         self.header.set("Subject", subject);
         self
@@ -206,7 +212,7 @@ impl Message {
     }
 
     /// Attach a file from path
-    pub fn attach_file(mut self, path: impl AsRef<Path>) -> Result<Self> {
+    pub fn attach_file(self, path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         let content = std::fs::read(path)?;
         let filename = path.file_name()
@@ -223,7 +229,7 @@ impl Message {
     }
 
     /// Embed a file from path
-    pub fn embed_file(mut self, path: impl AsRef<Path>) -> Result<Self> {
+    pub fn embed_file(self, path: impl AsRef<Path>) -> Result<Self> {
         let path = path.as_ref();
         let content = std::fs::read(path)?;
         let filename = path.file_name()
@@ -241,19 +247,24 @@ impl Message {
         self.embedded.clear();
     }
 
-    /// Get the header
-    pub fn header(&self) -> &Header {
+    /// Get the message header
+    pub fn get_header(&self) -> &Header {
         &self.header
     }
 
-    /// Get mutable reference to the header
-    pub fn header_mut(&mut self) -> &mut Header {
+    /// Get mutable reference to the message header
+    pub fn get_header_mut(&mut self) -> &mut Header {
         &mut self.header
     }
 
     /// Check if message has multiple parts
     pub fn is_multipart(&self) -> bool {
         self.parts.len() > 1 || !self.attachments.is_empty() || !self.embedded.is_empty()
+    }
+
+    /// Get the From address
+    pub fn from_address(&self) -> Option<String> {
+        self.header.get_first("From").map(|s| extract_email(s))
     }
 
     /// Get all recipients (To, Cc, Bcc)
@@ -450,13 +461,21 @@ fn generate_boundary() -> String {
 }
 
 /// Extract email address from formatted string
-fn extract_email(s: &str) -> String {
-    if let Some(start) = s.find('<') {
-        if let Some(end) = s.find('>') {
-            return s[start + 1..end].to_string();
+/// Extract email address from a header value like "Name <email@domain.com>"
+fn extract_email(header_value: &str) -> String {
+    let trimmed = header_value.trim();
+    
+    // Look for email in angle brackets
+    if let Some(start) = trimmed.rfind('<') {
+        if let Some(end) = trimmed.rfind('>') {
+            if start < end {
+                return trimmed[(start + 1)..end].to_string();
+            }
         }
     }
-    s.trim().to_string()
+    
+    // No angle brackets, assume the whole string is an email
+    trimmed.to_string()
 }
 
 #[cfg(test)]

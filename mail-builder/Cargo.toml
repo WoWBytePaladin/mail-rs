@@ -15,6 +15,7 @@ mail-core = { path = "../mail-core" }
 mail-smtp = { path = "../mail-smtp" }
 tokio.workspace = true
 thiserror.workspace = true
+chrono.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -11,6 +11,9 @@ pub mod transport;
 pub mod auth;
 pub mod error;
 
+#[cfg(test)]
+mod tests;
+
 pub use client::SmtpClient;
 pub use transport::{SmtpTransport, TlsConfig};
 pub use auth::{Credentials, AuthMechanism};

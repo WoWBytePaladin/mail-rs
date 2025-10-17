@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use chrono::{DateTime, Utc};
 use crate::address::Address;
-use crate::encoding::Encoding;
 
 /// Email header field
 #[derive(Debug, Clone)]

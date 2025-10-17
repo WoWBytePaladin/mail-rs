@@ -28,11 +28,11 @@ impl Encoding {
     pub fn encode(&self, data: &[u8]) -> Vec<u8> {
         match self {
             Self::QuotedPrintable => {
-                quoted_printable::encode(data).into_bytes()
+                quoted_printable::encode(data).into()
             }
             Self::Base64 => {
                 use base64::Engine;
-                base64::engine::general_purpose::STANDARD.encode(data).into_bytes()
+                base64::engine::general_purpose::STANDARD.encode(data).into()
             }
             Self::EightBit | Self::SevenBit => data.to_vec(),
         }

@@ -9,6 +9,9 @@ pub mod header;
 pub mod encoding;
 pub mod address;
 
+#[cfg(test)]
+mod tests;
+
 pub use error::{Error, Result};
 pub use message::Message;
 pub use header::Header;

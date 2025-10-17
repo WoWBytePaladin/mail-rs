@@ -46,6 +46,31 @@ uuid = { version = "1.11.0", features = ["v4"] }
 
 # Testing
 mockito = "1.6.1"
+criterion = "0.5.1"
+
+[package]
+name = "mail-rs"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+mail-core = { path = "mail-core" }
+mail-smtp = { path = "mail-smtp" }
+mail-builder = { path = "mail-builder" }
+
+[dev-dependencies]
+criterion = { workspace = true }
+tokio = { workspace = true }
+
+[[bench]]
+name = "mail_benchmarks"
+harness = false
 
 [profile.release]
 opt-level = 3

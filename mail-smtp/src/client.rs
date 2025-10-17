@@ -44,10 +44,8 @@ impl SmtpClient {
         let mut connection = self.connect().await?;
         
         // Get sender and recipients
-        let from = message.header()
-            .get_first("From")
+        let from_email = message.from_address()
             .ok_or_else(|| Error::Custom("Missing From header".to_string()))?;
-        let from_email = extract_email(from);
         
         let recipients = message.recipients();
         if recipients.is_empty() {
@@ -263,23 +261,15 @@ impl SmtpConnection {
     }
 }
 
-fn extract_email(s: &str) -> String {
-    if let Some(start) = s.find('<') {
-        if let Some(end) = s.find('>') {
-            return s[start + 1..end].to_string();
-        }
-    }
-    s.trim().to_string()
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::transport::SmtpTransport;
 
     #[test]
-    fn test_extract_email() {
-        assert_eq!(extract_email("test@example.com"), "test@example.com");
-        assert_eq!(extract_email("User <test@example.com>"), "test@example.com");
-        assert_eq!(extract_email("\"Name\" <test@example.com>"), "test@example.com");
+    fn test_client_creation() {
+        let transport = SmtpTransport::new("smtp.test.com", 587);
+        let _client = SmtpClient::new(transport);
+        // Just test that we can create a client
     }
 }
