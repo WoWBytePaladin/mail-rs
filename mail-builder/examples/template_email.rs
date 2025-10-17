@@ -4,7 +4,7 @@ use mail_builder::prelude::*;
 use std::collections::HashMap;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // Template data
     let mut template_data = HashMap::new();
     template_data.insert("user_name", "Alice Johnson");

@@ -11,7 +11,7 @@ struct Subscriber {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // Subscriber list
     let subscribers = vec![
         Subscriber {
@@ -181,7 +181,7 @@ async fn send_with_retry(
     client: &SmtpClient,
     message: &Message,
     max_retries: u32,
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> std::result::Result<(), Box<dyn std::error::Error>> {
     let mut last_error = None;
     
     for attempt in 1..=max_retries {
@@ -200,5 +200,5 @@ async fn send_with_retry(
         }
     }
     
-    Err(last_error.unwrap())
+    Err(Box::new(last_error.unwrap()))
 }

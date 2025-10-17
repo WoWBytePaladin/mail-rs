@@ -4,6 +4,9 @@
 
 mod builder;
 
+#[cfg(test)]
+mod tests;
+
 pub use builder::MessageBuilder;
 pub use mail_core::{Address, Message, Encoding, Header, Error, Result};
 pub use mail_smtp::{SmtpClient, SmtpTransport, TlsConfig, Credentials, AuthMechanism};

@@ -3,7 +3,7 @@
 use mail_builder::prelude::*;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let message = Message::new()
         .from(Address::new("sender@example.com"))
         .to(vec![Address::new("recipient@example.com")])

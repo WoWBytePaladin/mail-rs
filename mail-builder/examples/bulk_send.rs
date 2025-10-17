@@ -4,7 +4,7 @@ use mail_builder::prelude::*;
 use std::time::Duration;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     // List of recipients
     let recipients = vec![
         ("alice@example.com", "Alice"),

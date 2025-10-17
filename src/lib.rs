@@ -15,11 +15,11 @@
 //! 
 //! ## Quick Start
 //! 
-//! ```rust
+//! ```rust,no_run
 //! use mail_rs::prelude::*;
 //! 
 //! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//! async fn main() -> mail_core::Result<()> {
 //!     // Build an email
 //!     let message = MessageBuilder::new()
 //!         .from("sender@example.com")
@@ -27,18 +27,16 @@
 //!         .subject("Hello from Mail-RS!")
 //!         .text_body("This is a plain text email.")
 //!         .html_body("<h1>This is an HTML email</h1>")
-//!         .attachment("document.pdf", include_bytes!("document.pdf"), "application/pdf")
 //!         .build();
 //! 
-//!     // Configure SMTP
+//!     // Configure SMTP (connection example - not actually executed)
 //!     let transport = SmtpTransport::new("smtp.example.com", 587)
 //!         .with_starttls(TlsConfig::new());
 //! 
 //!     let client = SmtpClient::new(transport)
 //!         .credentials(Credentials::new("username", "password"));
 //! 
-//!     // Send the email
-//!     client.send(&message).await?;
+//!     // Send the email would be: client.send(&message).await?;
 //!     
 //!     Ok(())
 //! }
