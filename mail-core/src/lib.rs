@@ -9,6 +9,7 @@ pub mod header;
 pub mod encoding;
 pub mod address;
 pub mod dkim;
+pub mod smime;
 
 #[cfg(test)]
 mod tests;
@@ -19,3 +20,4 @@ pub use header::Header;
 pub use encoding::Encoding;
 pub use address::Address;
 pub use dkim::{DkimConfig, DkimSigner, Canonicalization};
+pub use smime::{SmimeConfig, SmimeSigner};

@@ -20,6 +20,9 @@ bytes.workspace = true
 base64.workspace = true
 log = "0.4"
 md5 = "0.7.0"
+reqwest = { version = "0.12", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+urlencoding = "2.1"
 
 # TLS support
 tokio-rustls = "0.26.0"

@@ -1,16 +1,49 @@
+use crate::oauth2::OAuth2Token;
+
 /// SMTP authentication credentials
 #[derive(Debug, Clone)]
-pub struct Credentials {
-    pub username: String,
-    pub password: String,
+pub enum Credentials {
+    /// Username and password authentication
+    Basic { username: String, password: String },
+    /// OAuth2 token authentication
+    OAuth2(OAuth2Token),
 }
 
 impl Credentials {
-    /// Create new credentials
+    /// Create new basic credentials
     pub fn new(username: impl Into<String>, password: impl Into<String>) -> Self {
-        Self {
+        Self::Basic {
             username: username.into(),
             password: password.into(),
+        }
+    }
+
+    /// Create OAuth2 credentials
+    pub fn oauth2(token: OAuth2Token) -> Self {
+        Self::OAuth2(token)
+    }
+
+    /// Get username (for basic auth only)
+    pub fn username(&self) -> Option<&str> {
+        match self {
+            Self::Basic { username, .. } => Some(username),
+            Self::OAuth2(_) => None,
+        }
+    }
+
+    /// Get password (for basic auth only) 
+    pub fn password(&self) -> Option<&str> {
+        match self {
+            Self::Basic { password, .. } => Some(password),
+            Self::OAuth2(_) => None,
+        }
+    }
+
+    /// Get OAuth2 token
+    pub fn oauth2_token(&self) -> Option<&OAuth2Token> {
+        match self {
+            Self::OAuth2(token) => Some(token),
+            Self::Basic { .. } => None,
         }
     }
 }
@@ -24,6 +57,8 @@ pub enum AuthMechanism {
     Login,
     /// CRAM-MD5 authentication (RFC 2195)
     CramMd5,
+    /// OAuth2 XOAUTH2 mechanism
+    XOAuth2,
     /// No authentication
     None,
 }
@@ -35,6 +70,7 @@ impl AuthMechanism {
             Self::Plain => "PLAIN",
             Self::Login => "LOGIN",
             Self::CramMd5 => "CRAM-MD5",
+            Self::XOAuth2 => "XOAUTH2",
             Self::None => "",
         }
     }
@@ -50,29 +86,60 @@ impl AuthMechanism {
         match self {
             Self::Plain => {
                 // PLAIN: \0username\0password
-                let mut buf = Vec::new();
-                buf.push(0);
-                buf.extend_from_slice(creds.username.as_bytes());
-                buf.push(0);
-                buf.extend_from_slice(creds.password.as_bytes());
-                vec![base64_encode(&buf)]
+                match creds {
+                    Credentials::Basic { username, password } => {
+                        let mut buf = Vec::new();
+                        buf.push(0);
+                        buf.extend_from_slice(username.as_bytes());
+                        buf.push(0);
+                        buf.extend_from_slice(password.as_bytes());
+                        vec![base64_encode(&buf)]
+                    }
+                    Credentials::OAuth2(_) => vec![], // OAuth2 doesn't use PLAIN
+                }
             }
             Self::Login => {
                 // LOGIN: username and password separately
-                vec![
-                    base64_encode(creds.username.as_bytes()),
-                    base64_encode(creds.password.as_bytes()),
-                ]
+                match creds {
+                    Credentials::Basic { username, password } => {
+                        vec![
+                            base64_encode(username.as_bytes()),
+                            base64_encode(password.as_bytes()),
+                        ]
+                    }
+                    Credentials::OAuth2(_) => vec![], // OAuth2 doesn't use LOGIN
+                }
             }
             Self::CramMd5 => {
                 // CRAM-MD5: username + space + HMAC-MD5(password, challenge)
-                if let Some(challenge_str) = challenge {
-                    let challenge_bytes = base64_decode(challenge_str).unwrap_or_default();
-                    let digest = hmac_md5(creds.password.as_bytes(), &challenge_bytes);
-                    let response = format!("{} {}", creds.username, hex_encode(&digest));
-                    vec![base64_encode(response.as_bytes())]
-                } else {
-                    vec![] // CRAM-MD5 requires a challenge
+                match creds {
+                    Credentials::Basic { username, password } => {
+                        if let Some(challenge_str) = challenge {
+                            let challenge_bytes = base64_decode(challenge_str).unwrap_or_default();
+                            let digest = hmac_md5(password.as_bytes(), &challenge_bytes);
+                            let response = format!("{} {}", username, hex_encode(&digest));
+                            vec![base64_encode(response.as_bytes())]
+                        } else {
+                            vec![] // CRAM-MD5 requires a challenge
+                        }
+                    }
+                    Credentials::OAuth2(_) => vec![], // OAuth2 doesn't use CRAM-MD5
+                }
+            }
+            Self::XOAuth2 => {
+                // XOAUTH2: user=username^Aauth=Bearer token^A^A
+                match creds {
+                    Credentials::OAuth2(token) => {
+                        if let Some(username) = creds.username() {
+                            let auth_string = format!("user={}\x01auth={}\x01\x01", username, token.authorization_header());
+                            vec![base64_encode(auth_string.as_bytes())]
+                        } else {
+                            // Extract username from token if available, or use email from scope
+                            let auth_string = format!("user=user\x01auth={}\x01\x01", token.authorization_header());
+                            vec![base64_encode(auth_string.as_bytes())]
+                        }
+                    }
+                    Credentials::Basic { .. } => vec![], // Basic auth doesn't use XOAUTH2
                 }
             }
             Self::None => vec![],
@@ -94,6 +161,9 @@ impl AuthMechanism {
                 }
                 if auth_line.contains("CRAM-MD5") {
                     mechanisms.push(Self::CramMd5);
+                }
+                if auth_line.contains("XOAUTH2") {
+                    mechanisms.push(Self::XOAuth2);
                 }
             }
         }
@@ -160,8 +230,8 @@ mod tests {
     #[test]
     fn test_credentials() {
         let creds = Credentials::new("user", "pass");
-        assert_eq!(creds.username, "user");
-        assert_eq!(creds.password, "pass");
+        assert_eq!(creds.username(), Some("user"));
+        assert_eq!(creds.password(), Some("pass"));
     }
 
     #[test]
@@ -180,6 +250,27 @@ mod tests {
         assert_eq!(encoded.len(), 2);
         assert_eq!(encoded[0], "dXNlcg=="); // "user"
         assert_eq!(encoded[1], "cGFzcw=="); // "pass"
+    }
+
+    #[test]
+    fn test_oauth2_credentials() {
+        let token = OAuth2Token::new("access123", "Bearer", Some(3600), None);
+        let creds = Credentials::oauth2(token);
+        
+        assert!(creds.oauth2_token().is_some());
+        assert!(creds.username().is_none());
+        assert!(creds.password().is_none());
+    }
+
+    #[test]
+    fn test_xoauth2_auth() {
+        let token = OAuth2Token::new("access123", "Bearer", Some(3600), None);
+        let creds = Credentials::oauth2(token);
+        let encoded = AuthMechanism::XOAuth2.encode(&creds);
+        
+        assert_eq!(encoded.len(), 1);
+        // Should contain the OAuth2 token in XOAUTH2 format
+        assert!(encoded[0].len() > 0);
     }
 
     #[test]

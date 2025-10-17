@@ -321,6 +321,14 @@ impl SmtpConnection {
                 self.write_line(&encoded[0]).await?;
                 self.read_response(235).await?;
             }
+            AuthMechanism::XOAuth2 => {
+                let encoded = mechanism.encode(creds);
+                if encoded.is_empty() {
+                    return Err(Error::Authentication("Failed to generate XOAUTH2 token".to_string()));
+                }
+                self.write_line(&format!("AUTH XOAUTH2 {}", encoded[0])).await?;
+                self.read_response(235).await?;
+            }
             AuthMechanism::None => {}
         }
         Ok(())
