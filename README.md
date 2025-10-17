@@ -76,6 +76,58 @@ let message = Message::new()
     .embed("logo.png", logo_data);
 ```
 
+### Connection Pool for High Performance
+
+```rust
+use mail_smtp::{SmtpPool, PoolConfig};
+
+let pool_config = PoolConfig {
+    max_connections: 10,
+    min_connections: 2,
+    max_idle_time: Duration::from_secs(300),
+    ..Default::default()
+};
+
+let pool = SmtpPool::with_config(transport, pool_config)
+    .credentials(credentials);
+
+// Send emails efficiently using pooled connections
+pool.send(&message).await?;
+```
+
+### Retry Logic with Exponential Backoff
+
+```rust
+use mail_smtp::{RetryableSmtpClient, RetryConfig};
+
+let retry_config = RetryConfig {
+    max_attempts: 5,
+    initial_delay: Duration::from_millis(100),
+    backoff_multiplier: 2.0,
+    retry_on_server_error: true,
+    ..Default::default()
+};
+
+let retryable_client = RetryableSmtpClient::with_config(client, retry_config);
+retryable_client.send(&message).await?; // Automatically retries on failure
+```
+
+### Rate Limiting
+
+```rust
+use mail_smtp::{RateLimitedSmtpClient, RateLimitConfig};
+
+let rate_config = RateLimitConfig {
+    max_emails: 100,
+    time_window: Duration::from_secs(60), // 100 emails per minute
+    sliding_window: true,
+    ..Default::default()
+};
+
+let rate_limited_client = RateLimitedSmtpClient::with_config(client, rate_config);
+rate_limited_client.send(&message).await?; // Respects rate limits
+```
+
 ## Architecture
 
 The library is organized as a cargo workspace with three crates:
@@ -101,6 +153,9 @@ The `mail-builder/examples/` directory contains several examples:
 - `embedded_images.rs` - Inline images in HTML
 - `bulk_send.rs` - Sending multiple emails efficiently
 - `tls_connection.rs` - Direct TLS connection (port 465)
+- `connection_pool.rs` - Using connection pools for performance
+- `retry_logic.rs` - Implementing retry mechanisms
+- `rate_limiting.rs` - Rate limiting email sending
 
 Run an example:
 
@@ -240,11 +295,11 @@ This library is inspired by go-gomail but adapted for Rust idioms:
 - [x] Authentication (PLAIN, LOGIN)
 - [x] Attachments and embedded files
 - [x] Multipart messages
+- [x] Connection pooling
+- [x] Retry logic
+- [x] Rate limiting
 - [ ] DKIM signing
 - [ ] S/MIME support
-- [ ] Connection pooling
-- [ ] Retry logic
-- [ ] Rate limiting
 - [ ] Template support
 - [ ] More auth mechanisms (CRAM-MD5, OAuth2)
 

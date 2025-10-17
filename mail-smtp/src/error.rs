@@ -4,7 +4,7 @@ use thiserror::Error;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// SMTP client errors
-#[derive(Debug, Error)]
+#[derive(Debug, Error, Clone)]
 pub enum Error {
     #[error("Connection error: {0}")]
     Connection(String),
@@ -25,11 +25,23 @@ pub enum Error {
     Timeout,
 
     #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
+    Io(String),
 
     #[error("Mail core error: {0}")]
-    MailCore(#[from] mail_core::Error),
+    MailCore(String),
 
     #[error("{0}")]
     Custom(String),
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Io(err.to_string())
+    }
+}
+
+impl From<mail_core::Error> for Error {
+    fn from(err: mail_core::Error) -> Self {
+        Error::MailCore(err.to_string())
+    }
 }

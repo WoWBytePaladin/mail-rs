@@ -103,6 +103,7 @@ impl rustls::client::danger::ServerCertVerifier for NoCertificateVerification {
 }
 
 /// SMTP transport layer
+#[derive(Clone)]
 pub struct SmtpTransport {
     host: String,
     port: u16,

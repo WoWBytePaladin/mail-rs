@@ -65,12 +65,12 @@ impl SmtpClient {
 
         // Send message content
         let content = message.format()?;
-        connection.write_data(&content).await?;
+        connection.write_message_data(&content).await?;
 
         Ok(())
     }
 
-    async fn connect(&self) -> Result<SmtpConnection> {
+    pub async fn connect(&self) -> Result<SmtpConnection> {
         let addr = format!("{}:{}", self.transport.host(), self.transport.port());
         
         let stream = if let Some(timeout) = self.timeout {
@@ -141,7 +141,8 @@ impl SmtpClient {
 }
 
 /// SMTP connection (either plain or TLS)
-enum SmtpConnection {
+#[derive(Debug)]
+pub enum SmtpConnection {
     Plain(BufReader<TcpStream>),
     Tls(BufReader<tokio_rustls::client::TlsStream<TcpStream>>),
 }
@@ -201,7 +202,26 @@ impl SmtpConnection {
         self.read_response(250).await
     }
 
-    async fn write_data(&mut self, data: &[u8]) -> Result<()> {
+    /// Send MAIL FROM command
+    pub async fn mail_from(&mut self, email: &str) -> Result<()> {
+        self.command(&format!("MAIL FROM:<{}>", email)).await?;
+        Ok(())
+    }
+
+    /// Send RCPT TO command
+    pub async fn rcpt_to(&mut self, email: &str) -> Result<()> {
+        self.command(&format!("RCPT TO:<{}>", email)).await?;
+        Ok(())
+    }
+
+    /// Send DATA command
+    pub async fn data(&mut self) -> Result<()> {
+        self.write_line("DATA").await?;
+        self.read_response(354).await?;
+        Ok(())
+    }
+
+    async fn write_message_data(&mut self, data: &[u8]) -> Result<()> {
         // Write message data
         match self {
             Self::Plain(reader) => {
@@ -218,6 +238,11 @@ impl SmtpConnection {
         
         self.read_response(250).await?;
         Ok(())
+    }
+
+    /// Write message data (public method for pool)
+    pub async fn write_data(&mut self, data: &[u8]) -> Result<()> {
+        self.write_message_data(data).await
     }
 
     async fn authenticate(&mut self, creds: &Credentials, mechanism: AuthMechanism) -> Result<()> {
