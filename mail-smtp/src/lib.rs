@@ -4,6 +4,8 @@
 //! - STARTTLS and direct TLS connections
 //! - Multiple authentication mechanisms (PLAIN, LOGIN, CRAM-MD5)
 //! - Connection pooling for efficient bulk sending
+//! - Retry logic with exponential backoff
+//! - Rate limiting for server compliance
 //! - Async/await API
 
 pub mod client;

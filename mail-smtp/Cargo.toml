@@ -19,6 +19,7 @@ anyhow.workspace = true
 bytes.workspace = true
 base64.workspace = true
 log = "0.4"
+md5 = "0.7.0"
 
 # TLS support
 tokio-rustls = "0.26.0"

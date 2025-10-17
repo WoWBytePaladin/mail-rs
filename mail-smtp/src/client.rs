@@ -42,7 +42,23 @@ impl SmtpClient {
     /// Send an email message
     pub async fn send(&self, message: &Message) -> Result<()> {
         let mut connection = self.connect().await?;
-        
+        self.send_with_connection(&mut connection, message).await
+    }
+
+    /// Send an email message with specific credentials
+    pub async fn send_with_credentials(&self, message: &Message, credentials: &Credentials) -> Result<()> {
+        let mut connection = self.connect_with_auth(Some(credentials), None).await?;
+        self.send_with_connection(&mut connection, message).await
+    }
+
+    /// Send an email message with specific credentials and auth mechanism
+    pub async fn send_with_auth(&self, message: &Message, credentials: &Credentials, mechanism: AuthMechanism) -> Result<()> {
+        let mut connection = self.connect_with_auth(Some(credentials), Some(mechanism)).await?;
+        self.send_with_connection(&mut connection, message).await
+    }
+
+    /// Send message using an existing connection
+    async fn send_with_connection(&self, connection: &mut SmtpConnection, message: &Message) -> Result<()> {
         // Get sender and recipients
         let from_email = message.from_address()
             .ok_or_else(|| Error::Custom("Missing From header".to_string()))?;
@@ -71,6 +87,10 @@ impl SmtpClient {
     }
 
     pub async fn connect(&self) -> Result<SmtpConnection> {
+        self.connect_with_auth(self.credentials.as_ref(), None).await
+    }
+
+    async fn connect_with_auth(&self, credentials: Option<&Credentials>, preferred_mechanism: Option<AuthMechanism>) -> Result<SmtpConnection> {
         let addr = format!("{}:{}", self.transport.host(), self.transport.port());
         
         let stream = if let Some(timeout) = self.timeout {
@@ -128,12 +148,30 @@ impl SmtpClient {
         }
 
         // Authenticate if credentials are provided
-        if let Some(ref creds) = self.credentials {
+        if let Some(creds) = credentials {
             let mechanisms = AuthMechanism::from_ehlo_response(&ehlo_response);
-            let mechanism = mechanisms.first()
-                .ok_or_else(|| Error::Authentication("No supported auth mechanism".to_string()))?;
             
-            connection.authenticate(creds, *mechanism).await?;
+            // Use preferred mechanism if specified and supported, otherwise choose best available
+            let mechanism = if let Some(preferred) = preferred_mechanism {
+                if mechanisms.contains(&preferred) {
+                    preferred
+                } else {
+                    return Err(Error::Authentication(format!("Preferred auth mechanism {:?} not supported by server", preferred)));
+                }
+            } else {
+                // Prefer CRAM-MD5 > PLAIN > LOGIN
+                if mechanisms.contains(&AuthMechanism::CramMd5) {
+                    AuthMechanism::CramMd5
+                } else if mechanisms.contains(&AuthMechanism::Plain) {
+                    AuthMechanism::Plain
+                } else if mechanisms.contains(&AuthMechanism::Login) {
+                    AuthMechanism::Login
+                } else {
+                    return Err(Error::Authentication("No supported auth mechanism".to_string()));
+                }
+            };
+            
+            connection.authenticate(creds, mechanism).await?;
         }
 
         Ok(connection)
@@ -261,6 +299,26 @@ impl SmtpConnection {
                 self.read_response(334).await?;
                 
                 self.write_line(&encoded[1]).await?;
+                self.read_response(235).await?;
+            }
+            AuthMechanism::CramMd5 => {
+                // Send AUTH CRAM-MD5 command
+                self.write_line("AUTH CRAM-MD5").await?;
+                let challenge_response = self.read_response(334).await?;
+                
+                // Extract challenge from response (format: "334 <base64-challenge>")
+                let challenge = challenge_response
+                    .strip_prefix("334 ")
+                    .ok_or_else(|| Error::Authentication("Invalid CRAM-MD5 challenge response".to_string()))?
+                    .trim();
+                
+                // Generate response with challenge
+                let encoded = mechanism.encode_with_challenge(creds, Some(challenge));
+                if encoded.is_empty() {
+                    return Err(Error::Authentication("Failed to generate CRAM-MD5 response".to_string()));
+                }
+                
+                self.write_line(&encoded[0]).await?;
                 self.read_response(235).await?;
             }
             AuthMechanism::None => {}

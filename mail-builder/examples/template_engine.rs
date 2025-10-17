@@ -1,7 +1,6 @@
 //! Email template example with dynamic content using the template engine
 
 use mail_builder::{EmailTemplate, TemplateContext, CommonTemplates};
-use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -57,9 +56,9 @@ async fn demo_basic_template() -> std::result::Result<(), Box<dyn std::error::Er
     let message = template.render(&context)?;
     
     println!("   📧 Rendered Email:");
-    println!("      From: {}", message.from_address().unwrap_or("N/A"));
+    println!("      From: {}", message.from_address().unwrap_or("N/A".to_string()));
     println!("      To: {:?}", message.recipients());
-    println!("      Subject: {}", message.subject().unwrap_or("N/A"));
+    println!("      Subject: {}", message.get_header().get_first("Subject").unwrap_or(&"N/A".to_string()));
     
     Ok(())
 }
@@ -80,7 +79,7 @@ async fn demo_welcome_template() -> std::result::Result<(), Box<dyn std::error::
     let message = template.render(&context)?;
     
     println!("   📧 Welcome Email Generated:");
-    println!("      Subject: {}", message.subject().unwrap_or("N/A"));
+    println!("      Subject: {}", message.get_header().get_first("Subject").unwrap_or(&"N/A".to_string()));
     println!("      Preview: Welcome to TechStart Inc., Alice Johnson!");
     
     Ok(())
@@ -106,7 +105,7 @@ async fn demo_newsletter_template() -> std::result::Result<(), Box<dyn std::erro
     let message = template.render(&context)?;
     
     println!("   📧 Newsletter Generated:");
-    println!("      Subject: {}", message.subject().unwrap_or("N/A"));
+    println!("      Subject: {}", message.get_header().get_first("Subject").unwrap_or(&"N/A".to_string()));
     
     Ok(())
 }
@@ -138,7 +137,7 @@ async fn demo_order_confirmation_template() -> std::result::Result<(), Box<dyn s
     let message = template.render(&context)?;
     
     println!("   📧 Order Confirmation Generated:");
-    println!("      Subject: {}", message.subject().unwrap_or("N/A"));
+    println!("      Subject: {}", message.get_header().get_first("Subject").unwrap_or(&"N/A".to_string()));
     
     Ok(())
 }
@@ -158,59 +157,4 @@ fn demo_variable_extraction() {
     
     let custom_vars = custom_template.get_variables();
     println!("      Custom template variables: {:?}", custom_vars);
-}
-Amount: {{price}}
-
-Thank you for your continued subscription!
-
----
-This is an automated message. Please do not reply.
-    "#;
-
-    // Replace template variables
-    let html_content = replace_template_vars(html_template, &template_data);
-    let text_content = replace_template_vars(text_template, &template_data);
-
-    // Build the email
-    let message = MessageBuilder::new()
-        .from_with_name("noreply@company.com", "Your Company")
-        .to_with_name("alice@example.com", "Alice Johnson")
-        .subject("Subscription Renewal Notice")
-        .text_body(&text_content)
-        .html_body(&html_content)
-        .header("X-Mailer", "mail-rs")
-        .header("X-Priority", "3")
-        .build();
-
-    // Configure SMTP client
-    let transport = SmtpTransport::new("smtp.company.com", 587)
-        .with_starttls(TlsConfig::new());
-
-    let client = SmtpClient::new(transport)
-        .credentials(Credentials::new("username", "password"));
-
-    // Send the email
-    match client.send(&message).await {
-        Ok(_) => {
-            println!("✓ Template email sent successfully to {}", 
-                template_data["user_name"]);
-        }
-        Err(e) => {
-            eprintln!("Failed to send email: {}", e);
-        }
-    }
-
-    Ok(())
-}
-
-/// Simple template variable replacement
-fn replace_template_vars(template: &str, data: &HashMap<&str, &str>) -> String {
-    let mut result = template.to_string();
-    
-    for (key, value) in data {
-        let placeholder = format!("{{{{{}}}}}", key);
-        result = result.replace(&placeholder, value);
-    }
-    
-    result
 }

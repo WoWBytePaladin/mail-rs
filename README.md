@@ -128,6 +128,33 @@ let rate_limited_client = RateLimitedSmtpClient::with_config(client, rate_config
 rate_limited_client.send(&message).await?; // Respects rate limits
 ```
 
+### Template Engine
+
+```rust
+use mail_builder::{EmailTemplate, TemplateContext, CommonTemplates};
+
+// Use built-in templates
+let template = CommonTemplates::welcome()
+    .from("welcome@{{company_domain}}")
+    .to("{{user_email}}");
+
+let context = TemplateContext::new()
+    .set("company_name", "My Company")
+    .set("company_domain", "mycompany.com")
+    .set("user_name", "John Doe")
+    .set("user_email", "john@example.com")
+    .set("app_url", "https://app.mycompany.com")
+    .set("support_email", "support@mycompany.com");
+
+let message = template.render(&context)?;
+
+// Or create custom templates
+let custom_template = EmailTemplate::new()
+    .subject("Welcome {{user_name}} to {{company_name}}")
+    .text_body("Hi {{user_name}}, welcome to our platform!")
+    .html_body("<h1>Welcome {{user_name}}</h1><p>Thanks for joining {{company_name}}!</p>");
+```
+
 ## Architecture
 
 The library is organized as a cargo workspace with three crates:
@@ -156,6 +183,7 @@ The `mail-builder/examples/` directory contains several examples:
 - `connection_pool.rs` - Using connection pools for performance
 - `retry_logic.rs` - Implementing retry mechanisms
 - `rate_limiting.rs` - Rate limiting email sending
+- `template_engine.rs` - Dynamic email templates with variables
 
 Run an example:
 
@@ -292,16 +320,16 @@ This library is inspired by go-gomail but adapted for Rust idioms:
 
 - [x] Core message types
 - [x] SMTP client with TLS
-- [x] Authentication (PLAIN, LOGIN)
+- [x] Authentication (PLAIN, LOGIN, CRAM-MD5)
 - [x] Attachments and embedded files
 - [x] Multipart messages
 - [x] Connection pooling
 - [x] Retry logic
 - [x] Rate limiting
+- [x] Template support
 - [ ] DKIM signing
 - [ ] S/MIME support
-- [ ] Template support
-- [ ] More auth mechanisms (CRAM-MD5, OAuth2)
+- [ ] More auth mechanisms (OAuth2)
 
 ## Contributing
 
