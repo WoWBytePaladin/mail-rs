@@ -1,0 +1,27 @@
+[package]
+name = "mail-smtp"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "SMTP client for mail-rs email library"
+
+[dependencies]
+mail-core = { path = "../mail-core" }
+tokio.workspace = true
+async-trait.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+bytes.workspace = true
+
+# TLS support
+tokio-rustls = "0.26.0"
+rustls = "0.23.19"
+rustls-pemfile = "2.2.0"
+webpki-roots = "0.26.7"
+
+[dev-dependencies]

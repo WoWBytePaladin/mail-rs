@@ -1,0 +1,20 @@
+[package]
+name = "mail-builder"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords.workspace = true
+categories.workspace = true
+description = "High-level email builder for mail-rs"
+
+[dependencies]
+mail-core = { path = "../mail-core" }
+mail-smtp = { path = "../mail-smtp" }
+tokio.workspace = true
+thiserror.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
