@@ -184,6 +184,7 @@ The `mail-builder/examples/` directory contains several examples:
 - `retry_logic.rs` - Implementing retry mechanisms
 - `rate_limiting.rs` - Rate limiting email sending
 - `template_engine.rs` - Dynamic email templates with variables
+- `cram_md5_auth.rs` - CRAM-MD5 authentication with fallback
 
 Run an example:
 

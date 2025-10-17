@@ -8,6 +8,7 @@ pub mod message;
 pub mod header;
 pub mod encoding;
 pub mod address;
+pub mod dkim;
 
 #[cfg(test)]
 mod tests;
@@ -17,3 +18,4 @@ pub use message::Message;
 pub use header::Header;
 pub use encoding::Encoding;
 pub use address::Address;
+pub use dkim::{DkimConfig, DkimSigner, Canonicalization};

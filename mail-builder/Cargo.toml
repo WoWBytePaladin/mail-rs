@@ -18,4 +18,6 @@ thiserror.workspace = true
 chrono.workspace = true
 
 [dev-dependencies]
+rsa = "0.8.2"
+rand = "0.8.5"
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

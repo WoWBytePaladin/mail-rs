@@ -257,6 +257,11 @@ impl Message {
         &mut self.header
     }
 
+    /// Get the headers (convenience method)
+    pub fn headers(&self) -> &Header {
+        &self.header
+    }
+
     /// Check if message has multiple parts
     pub fn is_multipart(&self) -> bool {
         self.parts.len() > 1 || !self.attachments.is_empty() || !self.embedded.is_empty()
