@@ -1,4 +1,4 @@
-use mail_core::{Message, Address};
+// Advanced template example - demonstrates template engine features
 use mail_builder::{
     AdvancedTemplateEngine, AdvancedTemplateContext, EmailTemplateDefinition,
     TemplateOptions, TemplateHelper

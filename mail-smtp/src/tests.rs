@@ -24,8 +24,8 @@ mod tests {
     #[test]
     fn test_credentials() {
         let creds = Credentials::new("username", "password");
-        assert_eq!(creds.username, "username");
-        assert_eq!(creds.password, "password");
+        assert_eq!(creds.username(), Some("username"));
+        assert_eq!(creds.password(), Some("password"));
     }
 
     #[test]
