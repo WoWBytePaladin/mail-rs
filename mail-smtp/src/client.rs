@@ -283,6 +283,25 @@ impl SmtpConnection {
         self.write_message_data(data).await
     }
 
+    /// Check if the connection is alive (public method for pool)
+    pub async fn is_alive(&mut self) -> bool {
+        // Send NOOP command to check connection
+        if let Err(_) = self.write_line("NOOP").await {
+            return false;
+        }
+        if let Err(_) = self.read_response(250).await {
+            return false;
+        }
+        true
+    }
+
+    /// Reset the connection state (public method for pool) 
+    pub async fn reset(&mut self) -> Result<()> {
+        self.write_line("RSET").await?;
+        self.read_response(250).await?;
+        Ok(())
+    }
+
     async fn authenticate(&mut self, creds: &Credentials, mechanism: AuthMechanism) -> Result<()> {
         match mechanism {
             AuthMechanism::Plain => {

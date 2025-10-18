@@ -14,6 +14,7 @@ pub mod auth;
 pub mod oauth2;
 pub mod error;
 pub mod pool;
+pub mod enhanced_pool;
 pub mod retry;
 pub mod ratelimit;
 
@@ -26,6 +27,10 @@ pub use auth::{Credentials, AuthMechanism};
 pub use oauth2::{OAuth2Config, OAuth2Token, OAuth2Client, TokenManager};
 pub use error::{Error, Result};
 pub use pool::{SmtpPool, PoolConfig, PoolStats};
+pub use enhanced_pool::{
+    EnhancedSmtpPool, EnhancedPoolConfig, PoolMetrics, PoolMetricsSnapshot,
+    ConnectionHealth, CircuitBreakerState
+};
 pub use retry::{RetryConfig, RetryableSmtpClient, RetryableSmtpPool, send_with_retry};
 pub use ratelimit::{
     RateLimitConfig, RateLimitedSmtpClient, RateLimitedSmtpPool,

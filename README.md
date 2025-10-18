@@ -328,9 +328,18 @@ This library is inspired by go-gomail but adapted for Rust idioms:
 - [x] Retry logic
 - [x] Rate limiting
 - [x] Template support
-- [ ] DKIM signing
-- [ ] S/MIME support
-- [ ] More auth mechanisms (OAuth2)
+- [x] **DKIM signing** ✨
+- [x] **S/MIME support** ✨
+- [x] **OAuth2 authentication** ✨
+- [x] **Advanced template system** ✨
+- [x] **Enhanced connection pool** ✨
+
+## Documentation
+
+For detailed information about the new features:
+
+- 📚 **[Enhanced Features Guide](docs/ENHANCED_FEATURES.md)** - Comprehensive documentation for all advanced features
+- 📋 **[Implementation Summary](docs/IMPLEMENTATION_SUMMARY.md)** - Complete implementation details and statistics
 
 ## Contributing
 

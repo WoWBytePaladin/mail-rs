@@ -4,6 +4,7 @@
 
 mod builder;
 pub mod template;
+pub mod advanced_template;
 
 #[cfg(test)]
 mod tests;
@@ -12,6 +13,10 @@ pub use builder::MessageBuilder;
 pub use mail_core::{Address, Message, Encoding, Header, Error, Result};
 pub use mail_smtp::{SmtpClient, SmtpTransport, TlsConfig, Credentials, AuthMechanism};
 pub use template::{EmailTemplate, TemplateContext, TemplateError, CommonTemplates};
+pub use advanced_template::{
+    AdvancedTemplateEngine, AdvancedTemplateContext, EmailTemplateDefinition,
+    TemplateHelper, TemplateOptions
+};
 
 /// Re-export for convenience
 pub mod prelude {
