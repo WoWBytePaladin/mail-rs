@@ -42,6 +42,7 @@ impl Default for PoolConfig {
 #[derive(Debug)]
 struct PooledConnection {
     connection: SmtpConnection,
+    #[allow(dead_code)]
     created_at: Instant,
     last_used: Instant,
 }

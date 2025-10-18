@@ -251,7 +251,6 @@ impl DkimSigner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::header::Header;
     use rsa::RsaPrivateKey;
     use rand::rngs::OsRng;
 

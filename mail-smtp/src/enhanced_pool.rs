@@ -86,6 +86,7 @@ struct EnhancedPooledConnection {
     health_status: ConnectionHealth,
     failure_count: usize,
     success_count: usize,
+    #[allow(dead_code)]
     id: String,
 }
 

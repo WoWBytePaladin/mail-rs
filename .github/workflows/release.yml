@@ -1,0 +1,149 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+          body: |
+            ## Changes in this Release
+            
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+  build-and-upload:
+    name: Build and Upload
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: mail-rs-linux-x86_64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            asset_name: mail-rs-linux-x86_64-musl
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_name: mail-rs-windows-x86_64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: mail-rs-macos-x86_64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: mail-rs-macos-aarch64
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+      
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: Strip binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: strip target/${{ matrix.target }}/release/mail-rs || true
+      
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: target/${{ matrix.target }}/release/mail-rs${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/octet-stream
+
+  publish-crates:
+    name: Publish to crates.io
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      
+      - name: Publish mail-core
+        run: cd mail-core && cargo publish --token ${{ secrets.CARGO_TOKEN }}
+        continue-on-error: true
+      
+      - name: Wait for crates.io to update
+        run: sleep 30
+      
+      - name: Publish mail-smtp
+        run: cd mail-smtp && cargo publish --token ${{ secrets.CARGO_TOKEN }}
+        continue-on-error: true
+      
+      - name: Wait for crates.io to update
+        run: sleep 30
+      
+      - name: Publish mail-builder
+        run: cd mail-builder && cargo publish --token ${{ secrets.CARGO_TOKEN }}
+        continue-on-error: true
+      
+      - name: Wait for crates.io to update
+        run: sleep 30
+      
+      - name: Publish mail-rs
+        run: cargo publish --token ${{ secrets.CARGO_TOKEN }}
+
+  docker:
+    name: Build and Push Docker Image
+    needs: create-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+      
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/mail-rs:latest
+            ${{ secrets.DOCKER_USERNAME }}/mail-rs:${{ needs.create-release.outputs.version }}
+          platforms: linux/amd64,linux/arm64

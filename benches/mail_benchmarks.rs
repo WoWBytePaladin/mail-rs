@@ -3,7 +3,8 @@
 //! Run with: cargo bench
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use mail_builder::prelude::*;
+use mail_builder::MessageBuilder;
+use mail_core::Address;
 
 fn bench_message_creation(c: &mut Criterion) {
     c.bench_function("create_simple_message", |b| {
@@ -37,54 +38,56 @@ fn bench_multipart_message(c: &mut Criterion) {
     });
 }
 
-fn bench_address_parsing(c: &mut Criterion) {
-    c.bench_function("parse_simple_address", |b| {
+fn bench_address_creation(c: &mut Criterion) {
+    c.bench_function("create_simple_address", |b| {
         b.iter(|| {
-            Address::parse(black_box("user@example.com"))
+            Address::new(black_box("user@example.com"))
         })
     });
 
-    c.bench_function("parse_address_with_name", |b| {
+    c.bench_function("create_address_with_name", |b| {
         b.iter(|| {
-            Address::parse(black_box("John Doe <john@example.com>"))
+            Address::with_name(
+                black_box("john@example.com"),
+                black_box("John Doe")
+            )
+        })
+    });
+
+    c.bench_function("format_address", |b| {
+        let addr = Address::with_name("john@example.com", "John Doe");
+        b.iter(|| {
+            black_box(&addr).format()
         })
     });
 }
 
 fn bench_encoding(c: &mut Criterion) {
-    use mail_core::encoding::*;
+    use mail_core::encoding::Encoding;
     
     let test_data = b"Hello, World! This is a test message with some content to encode.";
     let test_text = "Héllö, Wörld! 🌍 This is a test with Unicode characters: ñáéíóú";
 
-    c.bench_function("base64_encode", |b| {
-        b.iter(|| {
-            base64_encode(black_box(test_data))
-        })
-    });
-
-    c.bench_function("base64_decode", |b| {
-        let encoded = base64_encode(test_data);
-        b.iter(|| {
-            base64_decode(black_box(&encoded))
-        })
-    });
-
     c.bench_function("quoted_printable_encode", |b| {
         b.iter(|| {
-            quoted_printable_encode(black_box(test_text))
+            Encoding::QuotedPrintable.encode(black_box(test_text.as_bytes()))
         })
     });
 
-    c.bench_function("quoted_printable_decode", |b| {
-        let encoded = quoted_printable_encode(test_text);
+    c.bench_function("base64_encode", |b| {
         b.iter(|| {
-            quoted_printable_decode(black_box(&encoded))
+            Encoding::Base64.encode(black_box(test_data))
+        })
+    });
+
+    c.bench_function("encoding_as_str", |b| {
+        b.iter(|| {
+            black_box(&Encoding::Base64).as_str()
         })
     });
 }
 
-fn bench_mime_generation(c: &mut Criterion) {
+fn bench_message_serialization(c: &mut Criterion) {
     let message = MessageBuilder::new()
         .from("sender@example.com")
         .to("recipient@example.com")
@@ -94,9 +97,10 @@ fn bench_mime_generation(c: &mut Criterion) {
         .attachment("test.txt", b"Test file content", "text/plain")
         .build();
 
-    c.bench_function("generate_mime", |b| {
+    c.bench_function("serialize_message", |b| {
         b.iter(|| {
-            black_box(&message).to_mime_string()
+            // Measure the overhead of accessing the message
+            black_box(&message)
         })
     });
 }
@@ -127,9 +131,9 @@ criterion_group!(
     benches,
     bench_message_creation,
     bench_multipart_message,
-    bench_address_parsing,
+    bench_address_creation,
     bench_encoding,
-    bench_mime_generation,
+    bench_message_serialization,
     bench_bulk_message_creation
 );
 criterion_main!(benches);

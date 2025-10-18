@@ -123,7 +123,7 @@ impl MessageBuilder {
         }
     }
 
-    /// Add an attachment from Vec<u8>
+    /// Add an attachment from `Vec<u8>`
     pub fn attachment_from_data(
         self,
         filename: impl Into<String>,

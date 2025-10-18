@@ -1,0 +1,35 @@
+# Directories
+target/
+.git/
+.github/
+docs/
+benches/
+tests/
+examples/
+
+# Files
+.gitignore
+.dockerignore
+Dockerfile
+*.md
+LICENSE
+CHANGELOG.md
+CONTRIBUTING.md
+
+# Build artifacts
+*.exe
+*.pdb
+*.so
+*.dylib
+*.dll
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

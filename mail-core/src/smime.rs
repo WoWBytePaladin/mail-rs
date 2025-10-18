@@ -1,6 +1,5 @@
 use crate::{Error, Result};
 use crate::message::Message;
-use std::path::Path;
 
 /// S/MIME configuration for encryption and signing
 #[derive(Debug, Clone)]
@@ -42,6 +41,7 @@ impl SmimeConfig {
 /// S/MIME operations for email encryption and signing
 #[derive(Debug)]
 pub struct SmimeSigner {
+    #[allow(dead_code)]
     config: SmimeConfig,
 }
 
@@ -113,7 +113,7 @@ impl SmimeSigner {
 
     // Private helper methods for S/MIME operations
     
-    fn create_signed_message(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn create_signed_message(&self, _data: &[u8]) -> Result<Vec<u8>> {
         // Placeholder for PKCS#7 signing
         // Real implementation would use OpenSSL PKCS7_sign
         
@@ -136,7 +136,7 @@ impl SmimeSigner {
         Ok(result)
     }
 
-    fn create_encrypted_message(&self, data: &[u8]) -> Result<Vec<u8>> {
+    fn create_encrypted_message(&self, _data: &[u8]) -> Result<Vec<u8>> {
         // Placeholder for PKCS#7 encryption
         // Real implementation would use OpenSSL PKCS7_encrypt
         
@@ -158,18 +158,21 @@ impl SmimeSigner {
         Ok(result)
     }
 
+    #[allow(dead_code)]
     fn load_certificate(&self) -> Result<Vec<u8>> {
         // Load certificate from file
         std::fs::read(&self.config.certificate_path)
             .map_err(|e| Error::Custom(format!("Failed to load certificate: {}", e)))
     }
 
+    #[allow(dead_code)]
     fn load_private_key(&self) -> Result<Vec<u8>> {
         // Load private key from file
         std::fs::read(&self.config.private_key_path)
             .map_err(|e| Error::Custom(format!("Failed to load private key: {}", e)))
     }
 
+    #[allow(dead_code)]
     fn load_recipient_certificates(&self) -> Result<Vec<Vec<u8>>> {
         let mut certificates = Vec::new();
         

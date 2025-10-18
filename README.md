@@ -163,7 +163,7 @@ The library is organized as a cargo workspace with three crates:
 - **mail-smtp** - SMTP client implementation with TLS support
 - **mail-builder** - High-level builder API (recommended for most users)
 
-```
+```text
 mail-rs/
 ├── mail-core/       # Core email types and RFC implementations
 ├── mail-smtp/       # Async SMTP client with TLS
@@ -197,6 +197,7 @@ cargo run --example simple
 ### SMTP Servers
 
 #### Gmail
+
 ```rust
 let transport = SmtpTransport::new("smtp.gmail.com", 587)
     .with_starttls(TlsConfig::new());
@@ -204,12 +205,14 @@ let transport = SmtpTransport::new("smtp.gmail.com", 587)
 ```
 
 #### Outlook/Office365
+
 ```rust
 let transport = SmtpTransport::new("smtp-mail.outlook.com", 587)
     .with_starttls(TlsConfig::new());
 ```
 
 #### Custom SMTP
+
 ```rust
 // STARTTLS (port 587)
 let transport = SmtpTransport::new("smtp.example.com", 587)
