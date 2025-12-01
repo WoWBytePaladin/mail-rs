@@ -46,7 +46,7 @@ uuid = { version = "1.11.0", features = ["v4"] }
 
 # Testing
 mockito = "1.6.1"
-criterion = "0.5.1"
+criterion = "0.8.0"
 
 [package]
 name = "mail-rs"
